@@ -1,5 +1,7 @@
 package automationTests;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.restassured.RestAssured;
@@ -13,79 +15,54 @@ import junit.framework.Assert;
 
 public class GithubSearchApiTest {
 	
-	public class Item {		 
-	    Integer id;
-	    String name;
-	    String full_name;
-	    String description;	   
-	}
-
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		
 		RestAssured.baseURI = "https://api.github.com/";
-		 
-		// Get the RequestSpecification of the request that you want to sent
-		// to the server. The server is specified by the BaseURI that we have
-		// specified in the above step.
 		RequestSpecification httpRequest = RestAssured.given();
  
-		// Make a request to the server by specifying the method Type and the method URL.
-		// This will return the Response from the server. Store the response in a variable.
+		// Query the server with name=RewardsNetwork and sort forks with order desc
 		Response response = httpRequest.request(Method.GET, "/search/repositories?q=RewardsNetwork in:Name&sort=forks&order=desc");
  
-		// Now let us print the body of the message to see what response
-		// we have recieved from the server
+		
 		String responseBody = response.getBody().asString();
 		//System.out.println("Response Body is =>  " + responseBody);	
 		
-		// Verify the Response code is 200
+		// Test Scenario 1: Verify the Response code is 200
+		
 		int statusCode = response.getStatusCode();
-		 
-		// Assert that correct status code is returned.
 		Assert.assertEquals(statusCode /*actual value*/, 200 /*expected value*/);
+		
+		// Test Scenario 2: Verify the Response Status code is 200
 		
 		String statusLine = response.getStatusLine();
 		Assert.assertEquals(statusLine /*actual value*/, "HTTP/1.1 200 OK" /*expected value*/);
 		
-		// Reader header of a give name. In this line we will get
-		// Header named Content-Type
-		String contentType = response.header("Content-Type");
-		System.out.println("Content-Type value: " + contentType);
+		// Test Scenario 3: Verify the Content Type
 		
+		String contentType = response.header("Content-Type");
+		System.out.println("Content-Type value: " + contentType);		
 		Assert.assertEquals(contentType /* actual value */, "application/json; charset=utf-8" /* expected value */);
 	
 	 
-		// Reader header of a give name. In this line we will get
-		// Header named Server
+	    // Test Scenario 4: Verify the remote server type
 		String serverType =  response.header("Server");
 		System.out.println("Server value: " + serverType);
 		Assert.assertEquals(serverType /* actual value */, "GitHub.com" /* expected value */);
 		
 	 
-		// Reader header of a give name. In this line we will get
-		// Header named Content-Encoding
+		// Test Scenario 5: Verify the remote server content encoding
 		String acceptLanguage = response.header("Content-Encoding");
 		System.out.println("Content-Encoding: " + acceptLanguage);
 		
 		Assert.assertEquals(acceptLanguage /* actual value */, "gzip" /* expected value */);
 		
 		
-		Headers allHeaders = response.headers();
-		
-		// Iterate over all the Headers
-		for(Header header : allHeaders)
-		{
-			System.out.println("Key: " + header.getName() + " Value: " + header.getValue());
-		}
-		
-		// To check for sub string presence get the Response body as a String.
-		// Do a String.contains
-		
+		// Test Scenario 6: Verify response body contains RewardsNetwork
 		Assert.assertEquals(responseBody.contains("RewardsNetwork"), true );
 		
 		
-		
+		// Test Scenario 7: Verify the default pagination is 30 item and less
 		JsonPath jsonPathEvaluator = response.jsonPath();
 		System.out.println("Response " + jsonPathEvaluator.get("total_count"));
 		//System.out.println("Response " + jsonPathEvaluator.get("items"));
@@ -94,49 +71,34 @@ public class GithubSearchApiTest {
 		
 		System.out.println(jsonResponse.size());
 		
+		int size = jsonResponse.size();
+		Assert.assertTrue(size <= 30);
 		
-		
+		// Test Scenario 8: Verify the full name contains  RewardsNetwork
 		List<String> allNames = jsonPathEvaluator.getList("items.full_name");
 		 
-		// Iterate over the list and print individual book item
+		String testStr = "RewardsNetwork";
+		
 		for(String name : allNames)
 		{
 			System.out.println("Name: " + name);
+			String str = name.toUpperCase();
+			Assert.assertTrue(str.contains(testStr.toUpperCase()));
 		}
 		
-        Integer firstId = jsonPathEvaluator.get("items[0].id");
-        System.out.println("First ID " + firstId);
-        
-        
+        // Test Scenario 9: Verify the response is sorted by number of forks by desc order
 		List<Integer> allForks = jsonPathEvaluator.getList("items.forks");
 		 
-		// Iterate over the list and print individual book item
 		for(Integer fork : allForks)
 		{
 			System.out.println("Fork Number: " + fork);
 		}
         
+		List<Integer> tmp = new ArrayList<Integer>(allForks);
+		Collections.sort(tmp,Collections.reverseOrder());
+		boolean sorted = tmp.equals(allForks);
+		Assert.assertTrue(sorted);
 		
-		List<Integer> allStars = jsonPathEvaluator.getList("items.stargazers_count");
-		 
-		// Iterate over the list and print individual book item
-		for(Integer stars : allStars)
-		{
-			System.out.println("Star Number: " + stars);
-		}
-
-/*
-    	List<Item> allBooks = jsonPathEvaluator.getList("items", Item.class);
-    	 
-    	// Iterate over the list and print individual book item
-    	// Note that every book entry in the list will be complete Json object of book
-    	
-    	for(Item book : allBooks)
-    	{
-    		System.out.println("Book: " + book.name);
-    	}
-
-*/
 	}
 
 }
