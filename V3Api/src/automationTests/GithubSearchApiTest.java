@@ -16,7 +16,7 @@ import junit.framework.Assert;
 public class GithubSearchApiTest {
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+		// Setup the URL for gitHub
 		
 		RestAssured.baseURI = "https://api.github.com/";
 		RequestSpecification httpRequest = RestAssured.given();
